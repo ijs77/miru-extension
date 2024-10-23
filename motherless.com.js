@@ -81,7 +81,7 @@ export default class extends Extension {
     const cover = await this.querySelector(res, 'video.video-js').getAttributeText("data-poster");
     const desc  = await this.querySelector(res, 'meta[name="keywords"]').getAttributeText("content");
     const user  = await this.querySelector(res, 'span.username').text;
-    const mp4   = await this.querySelector(res, 'source[type="video\/mp4"]').getAttributeText("src");
+    const video = await this.querySelector(res, 'source[type="video\/mp4"]').getAttributeText("src");
 
     return {
       title: title.trim(),
@@ -92,7 +92,7 @@ export default class extends Extension {
           title: user.trim(),
           urls: [{
             name: "Play",
-            url: mp4,
+            url: video,
           }]
         },
       ],
