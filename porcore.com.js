@@ -4,7 +4,7 @@
 // @author       javxsub.com
 // @lang         en
 // @license      MIT
-// @icon         https://porcore.com/favicon.ico
+// @icon         https://porcore.com/favicon-96x96.png
 // @package      porcore.com
 // @type         bangumi
 // @webSite      https://porcore.com
