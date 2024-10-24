@@ -17,7 +17,8 @@ export default class extends Extension {
     const res = await this.request("", {
       "Miru-Url": url,
       "Referer": "https://motherless.com",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+      "Cookie": "search_sort=date; _force_mobile=false;"
     });
     return url;
   }
@@ -93,6 +94,12 @@ if (page == 1) {
     const desc  = await this.querySelector(res, 'meta[name="keywords"]').getAttributeText("content");
     const user  = await this.querySelector(res, 'span.username').text;
     const mp4   = await this.querySelector(res, 'source[type="video\/mp4"]').getAttributeText("src");
+    const videos = await this.querySelector(res, 'video.video-js').innerHTML;
+
+    const jsonRegex = /https[^"]*/gm
+    const result = videos.match(jsonRegex);
+    const nomer = result.length-1;
+
 
     return {
       title: title.trim(),
@@ -102,9 +109,13 @@ if (page == 1) {
         {
           title: user.trim(),
           urls: [{
-            name: title,
-            url: mp4,
-          }]
+            name: "SD",
+            url: result[0],
+         },
+         {
+            name: "HD",
+            url: result[nomer],
+         }]
         },
       ],
     };
