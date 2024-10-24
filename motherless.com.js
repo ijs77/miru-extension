@@ -24,8 +24,14 @@ export default class extends Extension {
 
   async latest(page) {
     // Latest updates
-    const paddedPage = page.toString();
-    const url = `/videos/recent?page=${paddedPage}`;
+
+if (page == 1) {
+    var rpage = "";
+} else {
+    var rpage = "?page="+page;
+}
+
+    const url = `/videos/recent${rpage}`;
     const res = await this.request(url);
     const videoList = await this.querySelectorAll(res, "div.thumb-container");
     const videos = [];
@@ -35,7 +41,7 @@ export default class extends Extension {
         const title = await this.getAttributeText(html,"div.captions > a","title");
         const url   = await this.getAttributeText(html,"a","href");
         const cover = await this.getAttributeText(html,"img.static","src");
-        const updt  = await this.getAttributeText(html,"span.hits > span").text;
+        const updt  = await this.querySelector(html,"span.size").text;
     
         if (title && url && cover) {
             videos.push({
@@ -63,15 +69,18 @@ export default class extends Extension {
         const title = await this.getAttributeText(html,"div.captions > a","title");
         const url   = await this.getAttributeText(html,"a","href");
         const cover = await this.getAttributeText(html,"img.static","src");
-  
-      if (title && url && cover) {
-          videos.push({
-              title: title,
-              url: url,
-              cover: cover.replace(/.*\//, 'https://i2.wp.com/motherless.com/thumbs/'),
-          });
-      }
+        const updt  = await this.querySelector(html,"span.size").text;
+    
+        if (title && url && cover) {
+            videos.push({
+                title: title,
+                url: url,
+                cover: cover.replace(/.*\//, 'https://i2.wp.com/motherless.com/thumbs/'),
+                update: updt
+            });
+        }
     }
+
     return videos;
   }
 
