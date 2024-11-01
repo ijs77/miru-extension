@@ -12,15 +12,6 @@
 // ==/MiruExtension==
 
 export default class extends Extension {
-    async req(url) {
-        const res = await this.request("", {
-            "Miru-Url": url,
-            "Referer": "https://motherless.com",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
-        });
-        return url;
-    }
-
     async latest(page) {
         // Latest updates
         if (page == 1) {
@@ -29,7 +20,11 @@ export default class extends Extension {
             var rpage = "?page=" + page;
         }
         const url = `/videos/recent${rpage}`;
-        const res = await this.request(url);
+        const res = await this.request(url, {
+            headers: {
+                cookie: `_force_mobile=false`,
+            },
+        });
         const videoList = await this.querySelectorAll(res, "div.thumb-container.video");
         const videos = [];
         for (const element of videoList) {
@@ -59,7 +54,11 @@ export default class extends Extension {
             var rpage = "&page=" + page;
         }
         const url = `/search?type=videos&sort=date&term=${kw}${rpage}`;
-        const res = await this.request(url);
+        const res = await this.request(url, {
+            headers: {
+                cookie: `_force_mobile=false`,
+            },
+        });
         const videoList = await this.querySelectorAll(res, "div.thumb-container.video");
         const videos = [];
         for (const element of videoList) {
@@ -84,7 +83,11 @@ export default class extends Extension {
     async detail(url) {
         // Details
         const strippedpath = url.replace(/^(https?:\/\/)?([^\/]+)(\/.*)?/, '$3');
-        const res = await this.request(strippedpath);
+        const res = await this.request(strippedpath, {
+            headers: {
+                cookie: `_force_mobile=false`,
+            },
+        });
         const title = await this.querySelector(res, 'div.media-meta-title > h1').text;
         const cover = await this.querySelector(res, 'video.video-js').getAttributeText("data-poster");
         const desc = await this.querySelector(res, 'meta[name="keywords"]').getAttributeText("content");
