@@ -12,120 +12,125 @@
 // ==/MiruExtension==
 
 export default class extends Extension {
+    async req(url) {
+        const res = await this.request("", {
+            "Miru-Url": url,
+            "Referer": "https://motherless.com",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+        });
+        return url;
+    }
 
-  async req(url) {
-    const res = await this.request("", {
-      "Miru-Url": url,
-      "Referer": "https://motherless.com",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-      "Cookie": "search_sort=date; _force_mobile=false;"
-    });
-    return url;
-  }
+    async latest(page) {
+        // Latest updates
+        if (page == 1) {
+            var rpage = "";
+        } else {
+            var rpage = "?page=" + page;
+        }
+        const url = `/videos/recent${rpage}`;
+        const res = await this.request(url);
+        const videoList = await this.querySelectorAll(res, "div.thumb-container.video");
+        const videos = [];
+        for (const element of videoList) {
+            const html = await element.content;
+            const title = await this.querySelector(html, "div.captions > a").text;
+            const url = await this.getAttributeText(html, "a", "href");
+            const cover = await this.getAttributeText(html, "img.static", "src");
+            const updt = await this.querySelector(html, "span.size").text;
+            if (title && url && cover) {
+                videos.push({
+                    title: title,
+                    url: url,
+                    cover: cover,
+                    update: updt,
+                });
+            }
+        }
 
-  async latest(page) {
-    // Latest updates
+        return videos;
+    }
 
-if (page == 1) {
-    var rpage = "";
-} else {
-    var rpage = "?page="+page;
-}
+    async search(kw, page) {
+        // Search
+        if (page == 1) {
+            var rpage = "";
+        } else {
+            var rpage = "&page=" + page;
+        }
+        const url = `/search?type=videos&sort=date&term=${kw}${rpage}`;
+        const res = await this.request(url);
+        const videoList = await this.querySelectorAll(res, "div.thumb-container.video");
+        const videos = [];
+        for (const element of videoList) {
+            const html = await element.content;
+            const title = await this.querySelector(html, "div.captions > a").text;
+            const url = await this.getAttributeText(html, "a", "href");
+            const cover = await this.getAttributeText(html, "img.static", "src");
+            const updt = await this.querySelector(html, "span.size").text;
+            if (title && url && cover) {
+                videos.push({
+                    title: title,
+                    url: url,
+                    cover: cover,
+                    update: updt,
+                });
+            }
+        }
 
-    const url = `/videos/recent${rpage}`;
-    const res = await this.request(url);
-    const videoList = await this.querySelectorAll(res, "div.thumb-container");
-    const videos = [];
+        return videos;
+    }
 
-    for (const element of videoList) {
-        const html  = await element.content;
-        const title = await this.getAttributeText(html,"div.captions > a","title");
-        const url   = await this.getAttributeText(html,"a","href");
-        const cover = await this.getAttributeText(html,"img.static","src");
-        const updt  = await this.querySelector(html,"span.size").text;
-    
-        if (title && url && cover) {
-            videos.push({
-                title: title,
-                url: url,
-                cover: cover.replace(/.*\//, 'https://i2.wp.com/motherless.com/thumbs/'),
-                update: updt
-            });
+    async detail(url) {
+        // Details
+        const strippedpath = url.replace(/^(https?:\/\/)?([^\/]+)(\/.*)?/, '$3');
+        const res = await this.request(strippedpath);
+        const title = await this.querySelector(res, 'div.media-meta-title > h1').text;
+        const cover = await this.querySelector(res, 'video.video-js').getAttributeText("data-poster");
+        const desc = await this.querySelector(res, 'meta[name="keywords"]').getAttributeText("content");
+        const videos = await this.querySelector(res, 'video.video-js').innerHTML;
+
+        const jsonRegex = /https[^"]*/gm
+        const result = videos.match(jsonRegex);
+        const nomer = result.length;
+        if (nomer > 1) {
+            return {
+                title: title.trim(),
+                cover: cover,
+                desc: desc,
+                episodes: [{
+                    title: "Directory",
+                    urls: [{
+                            name: "[SD] " + title.trim(),
+                            url: result[0],
+                        }, {
+                            name: "[HD] " + title.trim(),
+                            url: result[1],
+                        }
+
+                    ]
+                }]
+            }
+        } else {
+            return {
+                title: title.trim(),
+                cover: cover,
+                desc: desc,
+                episodes: [{
+                    title: "Directory",
+                    urls: [{
+                        name: "[SD] " + title.trim(),
+                        url: result[0],
+                    }]
+                }]
+            }
         }
     }
 
-    return videos;
-  }
-
-  async search(kw, page) {
-    // Search
-    const paddedPage = page.toString();
-    const url = `/term/videos/${kw}?sort=date&page=${paddedPage}`;
-    const res = await this.request(url);
-    const videoList = await this.querySelectorAll(res, "div.thumb-container");
-    const videos = [];
-
-    for (const element of videoList) {
-        const html  = await element.content;
-        const title = await this.getAttributeText(html,"div.captions > a","title");
-        const url   = await this.getAttributeText(html,"a","href");
-        const cover = await this.getAttributeText(html,"img.static","src");
-        const updt  = await this.querySelector(html,"span.size").text;
-    
-        if (title && url && cover) {
-            videos.push({
-                title: title,
-                url: url,
-                cover: cover.replace(/.*\//, 'https://i2.wp.com/motherless.com/thumbs/'),
-                update: updt
-            });
+    async watch(url) {
+        return {
+            type: "mp4",
+            url: url,
         }
     }
-
-    return videos;
-  }
-
-  async detail(url) {
-    // Details
-    const strippedpath = url.replace(/^(https?:\/\/)?([^\/]+)(\/.*)?/, '$3');
-    const res   = await this.request(strippedpath);
-    const title = await this.querySelector(res, 'div.media-meta-title > h1').text;
-    const cover = await this.querySelector(res, 'video.video-js').getAttributeText("data-poster");
-    const desc  = await this.querySelector(res, 'meta[name="keywords"]').getAttributeText("content");
-    const user  = await this.querySelector(res, 'span.username').text;
-    const mp4   = await this.querySelector(res, 'source[type="video\/mp4"]').getAttributeText("src");
-    const videos = await this.querySelector(res, 'video.video-js').innerHTML;
-
-    const jsonRegex = /https[^"]*/gm
-    const result = videos.match(jsonRegex);
-    const nomer = result.length-1;
-
-
-    return {
-      title: title.trim(),
-      cover: cover.replace(/.*\//, 'https://i2.wp.com/motherless.com/thumbs/'),
-      desc,
-      episodes: [
-        {
-          title: user.trim(),
-          urls: [{
-            name: "SD",
-            url: result[0],
-         },
-         {
-            name: "HD",
-            url: result[nomer],
-         }]
-        },
-      ],
-    };
-  }
-
-
-  async watch(url) {
-    return {
-      type: "mp4",
-      url: url || "",
-    };
-  }
 }
